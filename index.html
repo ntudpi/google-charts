@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <link rel="stylesheet"
+    href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+
+  <title>Gantt Chart Using Forms</title>
+</head>
+<body>
+  <div class="container">
+    <br>
+    <h1>Gantt Chart Using Forms</h1>
+    <hr>
+    <div id="chart"></div>
+
+    <div id="alert-message"></div>
+
+    <form>
+      <div class="form-group">
+        <label for="taskID">Task ID</label>
+        <select id="taskID" class="form-control" onchange="validateTaskID(this.value)">
+          <option value="" selected>Choose...</option>
+          <option value="Research">Research</option>
+          <option value="Write">Write</option>
+          <option value="Cite">Cite</option>
+          <option value="Complete">Complete</option>
+          <option value="Outline">Outline</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="taskName">Task Name</label>
+        <input type="text" class="form-control" id="taskName" name="taskName"
+          onchange="validateTaskName(this.value)" placeholder="Enter task name">
+      </div>
+
+      <div class="form-group">
+        <label for="startDate">Task Start Date</label>
+        <input type="date" class="form-control" id="startDate" name="startDate"
+          onchange="validateDateAndDuration()">
+      </div>
+
+      <div class="form-group">
+        <label for="endDate">Task End Date</label>
+        <input type="date" class="form-control" id="endDate" name="endDate"
+          onchange="validateDateAndDuration()">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <label for="duration">Task Duration</label>
+          <input type="number" class="form-control" id="duration" name="duration" min="1" max="30"
+            onchange="validateDuration(this.value)">
+          <small class="form-text text-muted">Enter duration in days, just the number.</small>
+        </div>
+
+        <div class="form-group col-md-6">
+          <label for="percentComplete">Percent Complete</label>
+          <select id="percentComplete" class="form-control"
+            onchange="validatePercentComplete(this.value)">
+            <option value="" selected>Choose...</option>
+            <option value="0">0%</option>
+            <option value="25">25%</option>
+            <option value="50">50%</option>
+            <option value="75">75%</option>
+            <option value="100">100%</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group dependencies" id="dependencies">
+        <span>Dependencies:</span><br>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" value="" id="Research">
+          <label class="form-check-label" for="research">
+            Research
+          </label>
+        </div>
+
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" value="" id="Write">
+          <label class="form-check-label" for="write">
+            Write
+          </label>
+        </div>
+
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" value="" id="Cite">
+          <label class="form-check-label" for="cite">
+            Cite
+          </label>
+        </div>
+
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" value="" id="Complete">
+          <label class="form-check-label" for="complete">
+            Complete
+          </label>
+        </div>
+
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" value="" id="Outline">
+          <label class="form-check-label" for="outline">
+            Outline
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="btn-submit">Submit</button>
+    </form>
+    <div style="min-height: 50px"></div>
+  </div>
+
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+  <script type="text/javascript">
+    google.charts.load('current', {'packages':['gantt']});    
+    google.charts.setOnLoadCallback(drawChart);
+
+    let chart;
+
+    function daysToMilliseconds(days) {
+      return days * 24 * 60 * 60 * 1000;
+    }
+
+    // function drawChart() {
+    //   const data = new google.visualization.DataTable();
+    //   data.addColumn('string', 'Task ID');
+    //   data.addColumn('string', 'Task Name');
+    //   data.addColumn('date', 'Start Date');
+    //   data.addColumn('date', 'End Date');
+    //   data.addColumn('number', 'Duration');
+    //   data.addColumn('number', 'Percent Complete');
+    //   data.addColumn('string', 'Dependencies');
+
+    //   data.addRows([
+    //     ['Research',  'Find sources',         new Date(2018, 9, 1), new Date(2018, 9, 5),   null,                   100,  null],
+    //     ['Write',     'Write paper',          null,                 new Date(2018, 9, 9),   daysToMilliseconds(3),  25,   'Research,Outline'],
+    //     ['Cite',      'Create bibliography',  null,                 new Date(2018, 9, 7),   daysToMilliseconds(1),  20,   'Research'],
+    //     ['Complete',  'Hand in paper',        null,                 new Date(2018, 9, 10),  daysToMilliseconds(1),  0,    'Cite,Write'],
+    //     ['Outline',   'Outline paper',        null,                 new Date(2018, 9, 6),   daysToMilliseconds(1),  100,  'Research']
+    //   ]);
+
+    //   const options = {
+    //     height: 275
+    //   };
+
+    //   chart = new google.visualization.Gantt(document.getElementById('chart'));
+
+    //   chart.draw(data, options);
+    // }
+
+    function addMoreRows(row) {
+      // console.log(row);
+
+      if (row['startDate'] !== null) {
+        let startDate = row['startDate'].split("-");
+
+        for (let i = 0; i < startDate.length; i++) {
+          startDate[i] = parseInt(startDate[i], 10);
+        }
+
+        startDate[1] = startDate[1] - 1;
+        row['startDate'] = new Date(startDate[0], startDate[1], startDate[2]);
+      }
+
+      let endDate = row['endDate'].split("-");
+
+      for (let i = 0; i < endDate.length; i++) {
+        endDate[i] = parseInt(endDate[i], 10);
+      }
+
+      endDate[1] = endDate[1] - 1;
+      row['endDate'] = new Date(endDate[0], endDate[1], endDate[2]);
+
+      if (row['duration'] !== null) {
+        row['duration'] = daysToMilliseconds(row['duration']);
+      }
+
+      row['percentComplete'] = parseInt(row['percentComplete'], 10);
+      
+      const data = new google.visualization.DataTable();
+      data.addColumn('string', 'Task ID');
+      data.addColumn('string', 'Task Name');
+      data.addColumn('date', 'Start Date');
+      data.addColumn('date', 'End Date');
+      data.addColumn('number', 'Duration');
+      data.addColumn('number', 'Percent Complete');
+      data.addColumn('string', 'Dependencies');
+
+      data.addRows([
+        [row['taskID'], row['taskName'], row['startDate'], row['endDate'],
+          row['duration'], row['percentComplete'], row['dependencies']]
+      ]);
+
+      const options = {
+        height: 275
+      };
+
+      chart = new google.visualization.Gantt(document.getElementById('chart'));
+
+      chart.draw(data, options);
+    }
+
+    function validateTaskID(taskID) {
+      // console.log("validateTaskID is invoked.");
+
+      if (taskID === "") {
+        showAlertMessage("Oops!", "You must provide a task ID!");
+        return false;
+      } else {
+        hideAlertMessage();
+      }
+
+      removeCircularDependency(taskID);
+
+      return true;
+    }
+
+    function removeCircularDependency(taskID) {
+      // console.log("removeCircularDependency is invoked.");
+
+      let dependencies = document.getElementById("dependencies");
+
+      let curCheckbox;
+      for (let i = 4; i <= 12; i += 2) {
+        curCheckbox = dependencies.childNodes[i].firstElementChild;
+        if (curCheckbox.disabled) {
+          curCheckbox.disabled = false;
+        }
+      }
+
+      document.getElementById(taskID).disabled = true;
+    }
+
+    function validateTaskName(taskName) {
+      // console.log("validateTaskName is invoked.");
+
+      if (taskName === "") {
+        showAlertMessage("Oops!", "You must provide a task name!");
+        return false;
+      } else {
+        hideAlertMessage();
+      }
+
+      return true;
+    }
+
+    function validateDateAndDuration() {
+      // console.log("validateDateAndDuration is invoked.");
+
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const duration = document.getElementById('duration').value;
+
+      let returnValue;
+
+      if (endDate === "") {
+        showAlertMessage("Oops!", "You must enter end date!");
+        returnValue = false;
+
+      } else if ((startDate === "" && duration === "") || (startDate !== "" && duration !== "")) {
+        showAlertMessage("Oops!", "You must provide either one of start date or duration!");
+        returnValue = false;
+
+      } else {
+        hideAlertMessage();
+        returnValue = startDateLessThanEndDate(startDate, endDate);
+      }
+
+      return returnValue;
+    }
+
+    function startDateLessThanEndDate(startDate, endDate) {
+      // console.log("validateDateAndDuration is invoked.");
+
+      if (startDate !== "") {
+        if ((new Date(startDate)).getTime() > (new Date(endDate)).getTime()) {
+          showAlertMessage("Duh!", "Start date must be earlier than end date sia!");
+          return false;
+        } else if ((new Date(startDate)).getTime() === (new Date(endDate)).getTime()) {
+          showAlertMessage("Oops!", "Duration of tasks must be at least 1 day!");
+        }
+      }
+
+      return true;
+    }
+
+    function validateDuration(duration) {
+      // console.log("validateDuration is invoked.");
+
+      const parsed = parseInt(duration, 10);
+
+      let returnValue;
+
+      if (parsed < 1 || parsed > 30) {
+        showAlertMessage("Oops!", "Duration must be between 1 and 30 days, inclusive!");
+        returnValue = false;
+      } else {
+        hideAlertMessage();
+        returnValue = validateDateAndDuration();
+      }
+
+      return returnValue;
+    }
+
+    function validatePercentComplete(percentComplete) {
+      // console.log("validatePercentComplete is invoked.");
+
+      if (percentComplete === "") {
+        showAlertMessage("Oops!", "You must provide a percentage value of completion!");
+        return false;
+      } else {
+        hideAlertMessage();
+      }
+
+      return true;
+    }
+
+    function showAlertMessage(lead, message) {
+      // console.log("showAlertMessage is invoked.");
+
+      const alertMessage = document.getElementById('alert-message');
+
+      if (!alertMessage.hasChildNodes()) {
+        alertMessage.classList.add("alert", "alert-danger", "alert-dismissible", "fade", "show");
+        alertMessage.setAttribute("role", "alert");
+
+        const textNode = document.createTextNode(message);
+        const strong = document.createElement('strong');
+        strong.innerHTML = lead + " ";
+
+        alertMessage.appendChild(strong);
+        alertMessage.appendChild(textNode);
+      
+      } else if (alertMessage.childNodes[0].innerHTML !== (lead + " ") ||
+          alertMessage.childNodes[1].nodeValue !== message) {
+        
+        const textNode = document.createTextNode(message);
+        const strong = document.createElement('strong');
+        strong.innerHTML = lead + " ";
+
+        while (alertMessage.firstChild) {
+          alertMessage.removeChild(alertMessage.firstChild);
+        }
+
+        alertMessage.appendChild(strong);
+        alertMessage.appendChild(textNode);
+
+        alertMessage.classList.remove("d-none");
+
+      } else {
+        alertMessage.classList.remove("d-none");
+      }
+    }
+
+    function hideAlertMessage() {
+      // console.log("hideAlertMessage is invoked.");
+
+      const alertMessage = document.getElementById('alert-message');
+
+      if (alertMessage.hasChildNodes()) {
+        alertMessage.classList.add("d-none");
+      }
+    }
+
+    function validateForm() {
+      const taskID = document.getElementById('taskID').value;
+      const taskName = document.getElementById('taskName').value;
+      const duration = document.getElementById('duration').value;
+      const percentComplete = document.getElementById('percentComplete').value;
+
+      if (validateTaskID(taskID) && validateTaskName(taskName) && validateDateAndDuration() &&
+        validateDuration(duration) && validatePercentComplete(percentComplete)) {
+        console.log("Submitting form...");
+        return true;
+      }
+
+      return false;
+    }
+
+    document.getElementById("btn-submit").addEventListener("click", function(e){
+      e.preventDefault();
+
+      if (validateForm()) {
+        let row = new Object();
+
+        row['taskID'] = document.getElementById('taskID').value;
+        row['taskName'] = document.getElementById('taskName').value;
+
+        const startDate = document.getElementById('startDate').value;
+        row['startDate'] = (startDate === "") ? null : startDate;
+
+        row['endDate'] = document.getElementById('endDate').value;
+
+        const duration = parseInt(document.getElementById('duration').value, 10);
+        row['duration'] = (duration === "") ? null : duration;
+
+        row['percentComplete'] = parseInt(document.getElementById('percentComplete').value);
+        
+        let dependencies = document.getElementById("dependencies");
+
+        // console.log(dependencies.childNodes);
+
+        let noChecked = true;
+        let depToReturn = "";
+        let currentCheckbox;
+
+        for (let i = 4; i <= 12; i += 2) {
+          currentCheckbox = dependencies.childNodes[i];
+          
+          if (currentCheckbox.firstElementChild.checked) {
+            depToReturn += currentCheckbox.textContent.replace(/\s/g,'') + ",";
+            noChecked = false;
+          }
+        }
+
+        row['dependencies'] = noChecked ? null : depToReturn.slice(0, depToReturn.length - 1);
+
+        addMoreRows(row);
+      }
+    });
+  </script>
+</body>
+</html>
