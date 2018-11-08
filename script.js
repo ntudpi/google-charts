@@ -1,7 +1,7 @@
-// google.charts.load('current', {'packages':['gantt']});    
-// google.charts.setOnLoadCallback(drawChart);
+google.charts.load('current', {'packages':['gantt']});    
+google.charts.setOnLoadCallback(drawChart);
 
-// let chart;
+let chart;
 
 function daysToMilliseconds(days) {
   return days * 24 * 60 * 60 * 1000;
@@ -10,31 +10,31 @@ function daysToMilliseconds(days) {
 function drawChart() {
   console.log("drawChart is invoked.");
 
-  // const data = new google.visualization.DataTable();
-  // data.addColumn('string', 'Task ID');
-  // data.addColumn('string', 'Task Name');
-  // data.addColumn('date', 'Start Date');
-  // data.addColumn('date', 'End Date');
-  // data.addColumn('number', 'Duration');
-  // data.addColumn('number', 'Percent Complete');
-  // data.addColumn('string', 'Dependencies');
+  const data = new google.visualization.DataTable();
+  data.addColumn('string', 'Task ID');
+  data.addColumn('string', 'Task Name');
+  data.addColumn('date', 'Start Date');
+  data.addColumn('date', 'End Date');
+  data.addColumn('number', 'Duration');
+  data.addColumn('number', 'Percent Complete');
+  data.addColumn('string', 'Dependencies');
 
-  // let rows = Array.prototype.slice.call(document.getElementById('table').rows);
+  let rows = Array.prototype.slice.call(document.getElementById('table').rows);
 
-  // for (let i = 1; i < rows.length; i++) {
-  //   let c = Array.prototype.slice.call(rows[i].cells);
-  //   let fetched = c.map(td => td.innerHTML);
-  //   fetched.shift();
-  //   data.addRows([processFetched(fetched)]);
-  // }
+  for (let i = 1; i < rows.length; i++) {
+    let c = Array.prototype.slice.call(rows[i].cells);
+    let fetched = c.map(td => td.innerHTML);
+    fetched.shift();
+    data.addRows([processFetched(fetched)]);
+  }
 
-  // const options = {
-  //   height: 275
-  // };
+  const options = {
+    height: 275
+  };
 
-  // chart = new google.visualization.Gantt(document.getElementById('chart'));
+  chart = new google.visualization.Gantt(document.getElementById('chart'));
 
-  // chart.draw(data, options);
+  chart.draw(data, options);
 }
 
 function processFetched(fetched) {
