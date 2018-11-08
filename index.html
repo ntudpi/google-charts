@@ -15,6 +15,22 @@
     <h1>Gantt Chart Using Forms</h1>
     <hr>
     <div id="chart"></div>
+    <table class="table d-none" id="table">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Task ID</th>
+          <th scope="col">Task Name</th>
+          <th scope="col">Start Date</th>
+          <th scope="col">End Date</th>
+          <th scope="col">Duration</th>
+          <th scope="col">Percent Complete</th>
+          <th scope="col">Dependencies</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
 
     <div id="alert-message"></div>
 
@@ -120,14 +136,14 @@
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 
   <script type="text/javascript">
-    google.charts.load('current', {'packages':['gantt']});    
-    google.charts.setOnLoadCallback(drawChart);
+    // google.charts.load('current', {'packages':['gantt']});    
+    // google.charts.setOnLoadCallback(drawChart);
 
-    let chart;
+    // let chart;
 
-    function daysToMilliseconds(days) {
-      return days * 24 * 60 * 60 * 1000;
-    }
+    // function daysToMilliseconds(days) {
+    //   return days * 24 * 60 * 60 * 1000;
+    // }
 
     // function drawChart() {
     //   const data = new google.visualization.DataTable();
@@ -156,56 +172,49 @@
     //   chart.draw(data, options);
     // }
 
-    function addMoreRows(row) {
+    function addToTable(row) {
       // console.log(row);
 
       if (row['startDate'] !== null) {
         let startDate = row['startDate'].split("-");
-
-        for (let i = 0; i < startDate.length; i++) {
-          startDate[i] = parseInt(startDate[i], 10);
-        }
-
-        startDate[1] = startDate[1] - 1;
-        row['startDate'] = new Date(startDate[0], startDate[1], startDate[2]);
+        startDate[1] = parseInt(startDate[1], 10) - 1;
+        row['startDate'] = startDate[0] + "-" + startDate[1].toString() + "-" + startDate[2];
       }
 
       let endDate = row['endDate'].split("-");
+      endDate[1] = parseInt(endDate[1], 10) - 1;
+      row['endDate'] = endDate[0] + "-" + endDate[1].toString() + "-" + endDate[2];
 
-      for (let i = 0; i < endDate.length; i++) {
-        endDate[i] = parseInt(endDate[i], 10);
-      }
-
-      endDate[1] = endDate[1] - 1;
-      row['endDate'] = new Date(endDate[0], endDate[1], endDate[2]);
-
-      if (row['duration'] !== null) {
-        row['duration'] = daysToMilliseconds(row['duration']);
-      }
+      row['duration'] = row['duration'].toString();
 
       row['percentComplete'] = parseInt(row['percentComplete'], 10);
-      
-      const data = new google.visualization.DataTable();
-      data.addColumn('string', 'Task ID');
-      data.addColumn('string', 'Task Name');
-      data.addColumn('date', 'Start Date');
-      data.addColumn('date', 'End Date');
-      data.addColumn('number', 'Duration');
-      data.addColumn('number', 'Percent Complete');
-      data.addColumn('string', 'Dependencies');
 
-      data.addRows([
-        [row['taskID'], row['taskName'], row['startDate'], row['endDate'],
-          row['duration'], row['percentComplete'], row['dependencies']]
-      ]);
+      let table = document.getElementById("table");
+      let tableBody = table.getElementsByTagName('tbody')[0];
 
-      const options = {
-        height: 275
-      };
+      let toInsertRow = tableBody.insertRow(tableBody.rows.length);
 
-      chart = new google.visualization.Gantt(document.getElementById('chart'));
+      let cell0 = toInsertRow.insertCell(0);
+      let cell1 = toInsertRow.insertCell(1);
+      let cell2 = toInsertRow.insertCell(2);
+      let cell3 = toInsertRow.insertCell(3);
+      let cell4 = toInsertRow.insertCell(4);
+      let cell5 = toInsertRow.insertCell(5);
+      let cell6 = toInsertRow.insertCell(6);
+      let cell7 = toInsertRow.insertCell(7);
 
-      chart.draw(data, options);
+      cell0.innerHTML = tableBody.rows.length;
+      cell1.innerHTML = row['taskID'];
+      cell2.innerHTML = row['taskName'];
+      cell3.innerHTML = row['startDate'];
+      cell4.innerHTML = row['endDate'];
+      cell5.innerHTML = row['duration'];
+      cell6.innerHTML = row['percentComplete'];
+      cell7.innerHTML = row['dependencies'];
+
+      if (table.classList.contains("d-none")) {
+        table.classList.remove("d-none");
+      }
     }
 
     function validateTaskID(taskID) {
@@ -378,7 +387,7 @@
 
       if (validateTaskID(taskID) && validateTaskName(taskName) && validateDateAndDuration() &&
         validateDuration(duration) && validatePercentComplete(percentComplete)) {
-        console.log("Submitting form...");
+        // console.log("Submitting form...");
         return true;
       }
 
@@ -399,8 +408,13 @@
 
         row['endDate'] = document.getElementById('endDate').value;
 
-        const duration = parseInt(document.getElementById('duration').value, 10);
-        row['duration'] = (duration === "") ? null : duration;
+        let duration = document.getElementById('duration').value;
+
+        if (duration !== "") {
+          duration = parseInt(duration, 10);
+        }
+        
+        row['duration'] = duration;
 
         row['percentComplete'] = parseInt(document.getElementById('percentComplete').value);
         
@@ -423,7 +437,7 @@
 
         row['dependencies'] = noChecked ? null : depToReturn.slice(0, depToReturn.length - 1);
 
-        addMoreRows(row);
+        addToTable(row);
       }
     });
   </script>
